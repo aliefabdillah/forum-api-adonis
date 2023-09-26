@@ -16,7 +16,7 @@ Before you begin, ensure you have met the following requirements:
 Clone this repo
 
 ```bash
-example> git clone https://github.com/aliefabdillah/forum-api-adonis.git
+> git clone https://github.com/aliefabdillah/forum-api-adonis.git
 ```
 
 - then cd into project root directory you just cloned `> cd project-directory`
