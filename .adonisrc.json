@@ -19,6 +19,7 @@
   ],
   "providers": [
     "./providers/AppProvider",
+    "./providers/LoadServiceProvider",
     "@adonisjs/core",
     "@adonisjs/lucid",
     "@adonisjs/auth"

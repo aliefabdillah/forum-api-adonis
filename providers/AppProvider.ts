@@ -13,7 +13,10 @@ export default class AppProvider {
   }
 
   public async ready () {
-    // App is ready
+    const Event = this.app.container.resolveBinding('Adonis/Core/Event')
+    const Database = this.app.container.resolveBinding('Adonis/Lucid/Database')
+    // App is ready\
+    Event.on('db:query', Database.prettyPrint)
   }
 
   public async shutdown () {
