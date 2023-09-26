@@ -6,7 +6,7 @@ export default class Posts extends BaseSchema {
   public async up () {
     this.schema.createTable(this.tableName, (table) => {
       table.uuid('id').primary()
-      table.string('tittle', 255).notNullable()
+      table.string('title', 255).notNullable()
       table.string('content', 255).notNullable()
       table.uuid('user_id').notNullable()
       table.uuid('forum_id').notNullable()
