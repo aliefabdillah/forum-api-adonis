@@ -11,7 +11,22 @@ export default class LoadServiceProvider {
     this.app.container.singleton('Service/AuthService', () => {
       return new AuthService()
     })
+
+    const { default: ForumService } = await import('../app/Services/ForumService')
+    this.app.container.singleton('Service/ForumService', () => {
+      return new ForumService()
+    })
+
+    const { default: UserService } = await import('../app/Services/UserService')
+    this.app.container.singleton('Service/UserService', () => {
+      return new UserService()
+    })
     
+    const { default: PostService } = await import('../app/Services/PostService')
+    this.app.container.singleton('Service/PostService', () => {
+      return new PostService()
+    })
+
     /* const { default: UserService } = await import('../app/Services/UserService')
     this.app.container.singleton('Service/UserService', () => {
       return new UserService()
