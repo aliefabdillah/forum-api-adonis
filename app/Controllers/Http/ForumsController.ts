@@ -1,7 +1,6 @@
 import { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
-import Forum from "App/Models/Forum";
 import Logger from "@ioc:Adonis/Core/Logger";
-import {v4, uuid} from 'uuid'
+import ForumService from "@ioc:Service/ForumService";
 
 export default class ForumsController {
   public async test({}: HttpContextContract) {
@@ -12,10 +11,13 @@ export default class ForumsController {
     };
   }
 
-  public async index({ logger }: HttpContextContract) {
-    const forums = await Forum.query().preload("user").preload("posts");
-    logger.info("Forums retrieved successfully");
-    return forums;
+  public async index({ response }: HttpContextContract) {
+    try {
+      const result = await ForumService.getAllForums()
+      response.send(result);
+    } catch (error) {
+      throw(error)
+    }
   }
 
   /* public async indexWithoutCache({}: HttpContextContract) {
@@ -23,66 +25,58 @@ export default class ForumsController {
     return await Forum.query().preload("user").preload("posts");
   } */
 
-  public async show({ params }: HttpContextContract) {
+  public async show({ params, response }: HttpContextContract) {
     try {
-      const forum = await Forum.find(params.id);
+      const { id } = params
+      const result = await ForumService.getForumById(id)
 
-      if (forum) {
-        await forum.preload("user");
-        await forum.preload("posts");
-        Logger.info({ ForumId: params.id }, `Forum retrieved successfully`);
-        return forum;
-      }
+      if (result.code === 404) return response.notFound(result)
+      return response.send(result);
+
     } catch (error) {
       Logger.error({ err: new Error(error) }, "Get Single Forum");
       console.log(error);
+      throw error
     }
   }
 
-  public async update({ request, params }: HttpContextContract) {
+  public async update({ response, request, params }: HttpContextContract) {
 
-    const forum = await Forum.find(params.id);
-    Logger.info({ ForumId: params.id }, `Forum retrieved successfully`);
+    try {
+      const payload: any = request.body()
+      const { id } = params
 
-    if (forum) {
-      forum.title = request.input("title");
-      forum.description = request.input("description");
-      if (await forum.save()) {
-        await forum.preload("user");
-        await forum.preload("posts");
-        Logger.info({ ForumId: params.id }, `Forum updated successfully`);
-        return forum;
-      }
-      Logger.error({ ForumId: params.id }, `Forum failed to update`);
-      return; // 422
+      const result = await ForumService.updateForum(payload, id)
+
+      if (result.code === 401) return response.notFound(result)
+      if (result.code === 422) return response.unprocessableEntity(result)
+      return response.send(result)
+    } catch (error) {
+      throw error
     }
-    Logger.error({ ForumId: params.id }, `Forum not found`);
-    return; // 401
   }
 
-  public async store({ auth, request }: HttpContextContract) {
-    const user = await auth.authenticate();
-    const forum = new Forum();
-    forum.id = uuid();
-    forum.title = request.input("title");
-    forum.description = request.input("description");
-    await user.related("forums").save(forum);
-    if (forum) {
-      Logger.info({ ForumId: forum.id }, `Forum created successfully`);
-      return forum;
+  public async store({ auth, request, response}: HttpContextContract) {
+    try {
+      const payload: any = request.body()
+      const result = await ForumService.createForum(payload, auth)
+
+      if (result.code === 400) return response.badRequest(result)
+      return response.ok(result)
+    } catch (error) {
+      throw error
     }
-    Logger.info({ Forum: forum }, `Forum not created`);
-    return;
   }
 
-  public async destroy({ auth, params }: HttpContextContract) {
-    const user = await auth.authenticate();
-    Logger.info({ UserId: user.id }, `User auth successfully`);
-    const forum = await Forum.query()
-      .where("user_id", user.id)
-      .where("id", params.id)
-      .delete();
-    Logger.info({ UserID: user.id }, `Forum deleted: ${forum}`);
-    return 404;
+  public async destroy({ auth, params, response}: HttpContextContract) {
+    try {
+      const user = await auth.authenticate();
+      const result = await ForumService.deleteForum(user.id, params.id)
+      
+      if (result.code === 404) return response.notFound(result)
+      return response.ok(result)
+    } catch (error) {
+      throw error
+    }
   }
 }
