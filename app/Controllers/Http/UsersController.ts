@@ -1,23 +1,20 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import UserService from '@ioc:Service/UserService'
 
 export default class UsersController {
-  public async postsByUser({ auth }: HttpContextContract ){
+  public async postsByUser({ response, auth }: HttpContextContract ){
     try {
-      const user = await auth.authenticate()
-      await user.preload('posts')
-      const post = user.posts
-      return post
+      const result = await UserService.getPostsByUsers(auth)
+      return response.ok(result)
     } catch (error) {
       console.error(error)
     }
   }
 
-  public async forumsByUser({ auth }: HttpContextContract){
+  public async forumsByUser({ response, auth }: HttpContextContract){
     try {
-      const user = await auth.authenticate()
-      await user.preload('posts')
-      const forums = user.forums
-      return forums
+      const result = await UserService.getForumsByUsers(auth)
+      return response.ok(result)
     } catch (error) {
       console.error(error)
     } 

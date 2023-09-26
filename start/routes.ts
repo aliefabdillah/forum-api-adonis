@@ -31,7 +31,7 @@ Route.group(() => {
   Route.group(() => {
     Route.resource('/post', 'PostsController').apiOnly()
     Route.resource('/forum', 'ForumsController').apiOnly()
-    Route.get('users/post', 'UsersController.postByUser')
+    Route.get('users/post', 'UsersController.postsByUser')
     Route.get('users/forum', 'UsersController.forumsByUser')
   }).middleware('auth:api')
 }).prefix('api/v1')
