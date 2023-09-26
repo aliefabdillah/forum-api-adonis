@@ -1,58 +1,69 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import Post from 'App/Models/Post';
-import { uuid } from 'uuid'
+import PostService from '@ioc:Service/PostService'
 
 export default class PostsController {
-  public async index({ request }: HttpContextContract)
+  public async index({ response }: HttpContextContract)
   {
-    const posts = await Post.query().preload('user').preload('forum');
-    return posts
-  }
-
-  public async show({ request, params }: HttpContextContract){
     try {
-      const post = await Post.find(params.id)
-      if (post) {
-        await post.preload('user')
-        await post.preload('forum')
-        return post
-      }
+      const result = await PostService.getAllPost()
+      return response.ok(result)
     } catch (error) {
-      console.log(error)      
+      throw error
     }
   }
 
-  public async update({ auth, request, params }: HttpContextContract){
-    const post = await Post.find(params.id)
-    if (post) {
-      post.id = uuid.v4()
-      post.title = request.input('title')
-      post.content = request.input('content')
-      if (await post.save()) {
-        await post.preload('user')
-        await post.preload('forum')
-        return post
-      }
-      return
+  public async show({ response, params }: HttpContextContract){
+    try {
+      const { id } = params
+      const result = await PostService.getPostById(id)
+
+      if (result.code === 404) return response.notFound(result)
+      return response.send(result);
+
+    } catch (error) {
+      console.log(error);
+      throw error
     }
-    return
+  }
+
+  public async update({ response, request, params }: HttpContextContract){
+    try {
+      const payload: any = request.body()
+      const { id } = params
+
+      const result = await PostService.updatePost(payload, id)
+
+      if (result.code === 401) return response.notFound(result)
+      if (result.code === 422) return response.unprocessableEntity(result)
+      return response.send(result)
+    } catch (error) {
+      throw error
+    }
   }
 
   public async store({ auth, request, response}: HttpContextContract)
   {
-      const user = await auth.authenticate();
-      const post = new Post();
-      post.title = request.input('title');
-      post.content = request.input('content');
-      post.forumId = request.input('forum');
-      await user.related('posts').save(post)
-      return post
+    try {
+      const payload: any = request.body()
+      const result = await PostService.createPost(payload, auth)
+
+      if (result.code === 400) return response.badRequest(result)
+      return response.ok(result)
+    } catch (error) {
+      throw error
+    }
   }
 
-  public async destroy({response, auth, request, params}: HttpContextContract)
+  public async destroy({response, auth, params}: HttpContextContract)
   {
-     const user = await auth.authenticate();
-     const post = await Post.query().where('user_id', user.id).where('id', params.id).delete();
-     return response.redirect('/dashboard');
+    try {
+      const user = await auth.authenticate();
+      const result = await PostService.deletePost(user.id, params.id)
+      
+      if (result.code === 404) return response.notFound(result)
+      return response.ok(result)
+    } catch (error) {
+      throw error
+    }
   }
 }
