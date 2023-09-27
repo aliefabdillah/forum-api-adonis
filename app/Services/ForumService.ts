@@ -20,7 +20,7 @@ export default class ForumServices{
   public async getForumById(id: string) {
     try {
       const forum = await Forum.query().where('id', id)
-        .select('id', 'title', 'description')
+        .select('id', 'title', 'description', 'userId')
         .preload('user', (query) => {
           query.select('id', 'email', 'name')
         })
