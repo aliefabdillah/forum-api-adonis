@@ -1,6 +1,8 @@
 import { HttpContextContract } from "@ioc:Adonis/Core/HttpContext";
 import Logger from "@ioc:Adonis/Core/Logger";
+import Cache from "@ioc:Kaperskyguru/Adonis-Cache";
 import ForumService from "@ioc:Service/ForumService";
+import Forum from "App/Models/Forum";
 
 export default class ForumsController {
   public async test({}: HttpContextContract) {

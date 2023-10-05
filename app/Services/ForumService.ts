@@ -1,15 +1,22 @@
 import { AuthContract } from "@ioc:Adonis/Addons/Auth";
 import Forum from "App/Models/Forum";
 import { randomUUID } from 'crypto'
+import Cache from "@ioc:Kaperskyguru/Adonis-Cache";
 
 export default class ForumServices{
   public async getAllForums(){
     try {
-      const forums = await Forum.query().preload("user").preload("posts");
+      const forums = await Cache.remember('forums', 3, async function() {
+        return await Forum.query().preload("user").preload("posts")
+      }) 
 
+      console.log(JSON.parse(forums));
+      
       if (forums.length === 0) return { code: 200, message: "Forums Empty"}
 
-      return { code: 200, message: "Successfully loaded", data: forums }
+      return { code: 200, message: "Successfully loaded", data: JSON.parse(forums) }
+      /* await Cache.flush()
+      return true */
 
     } catch (error) {
       console.log(error)
@@ -44,14 +51,18 @@ export default class ForumServices{
 
   public async updateForum(payload: { title: string, description: string}, id: string){
     try {
-      const forum = await Forum.find(id);
+      const forum = await Forum.find(id) 
 
       if (forum) {
+
         forum.title = payload.title;
         forum.description = payload.description
         if (await forum.save()) {
           await forum.load("user")
           await forum.load("posts")
+
+          // ketika berhasil update data di db, lalu update ke cache server
+          await Cache.update('forum_id' + id, forum, 60)
 
           return { code: 200, message: "Update Successfully", data: forum }
         }
@@ -75,6 +86,9 @@ export default class ForumServices{
       forum.description = payload.description
 
       await user.related("forums").save(forum);
+
+      //store new forum to cache
+      await Cache.set('forum_id' + forum.id, forum, 60)
 
       if (forum) {
         return { code: 200, message: "Created Successfully", data: forum }
